@@ -10,12 +10,10 @@ cloudinary.config({
 
 export async function POST(req) {
     const body = await req.json()
-    console.log(body)
     const result = await cloudinary.uploader.upload(body.image, {
         resource_type: "image",
         public_id: body.product,
     })
-    console.log(result)
 
     let func = await addProducttoDB({picture: result.secure_url, price: body.price,  product: body.product, brand: body.brand, quantity: body.quantity})
 

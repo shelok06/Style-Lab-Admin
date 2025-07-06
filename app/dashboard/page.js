@@ -12,6 +12,9 @@ const dashboard = () => {
   const [productButton, setproductButton] = useState(false)
   const [productlist, setproductlist] = useState([])
   const [deleteIds, setdeleteIds] = useState([])
+  const [Edit, setEdit] = useState()
+  const [editPanel, seteditPanel] = useState(false)
+  const [updatedProduct, setupdatedProduct] = useState()
   const router = useRouter()
 
   // useEffect(() => {
@@ -20,9 +23,8 @@ const dashboard = () => {
   //   }
   // }, [session])
 
-  const handleUpload = (e) => {
-    const image = e.target.files[0]
-    console.log(image)
+  const handleImageUpload = (e) => {
+    const picture = e.target.files[0]
 
     const reader = new FileReader()
     reader.onload = (e) => {
@@ -30,17 +32,18 @@ const dashboard = () => {
       setImage(fileContent)
     }
 
-    reader.readAsDataURL(image)
+    if (picture) {
+      reader.readAsDataURL(picture)
+    }
   }
 
   const handleChange = (e) => {
     setProduct({ ...product, [e.target.name]: e.target.value })
   }
 
-  const handleProduct = async () => {
-    console.log(product)
+  const handleProductUpload = async () => {
     try {
-      const res = await fetch("/api/imageUpload", {
+      const res = await fetch("/api/productUpload", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ "image": image, ...product }),
@@ -58,7 +61,9 @@ const dashboard = () => {
           theme: "light",
           transition: Slide,
         });
-        setProduct({});
+        setTimeout(() => {
+          window.location.reload()
+        }, 500);
       }
     } catch (error) {
       console.log(error)
@@ -66,38 +71,87 @@ const dashboard = () => {
   }
 
   const handleproductList = async () => {
-    let res = await fetch("/api/productList")
-    let r = await res.json()
-    setproductlist([...r.data])
+    try {
+      let res = await fetch("/api/productList")
+      if (!res.ok) throw new Error("Fetch failed");
+      let r = await res.json()
+      setproductlist([...r.data])
+    }
+    catch (err) {
+      console.error(err)
+      throw err
+    }
   }
-
-  console.log(productlist)
 
   const handleDelete = (e, id) => {
     let newArr = productlist.filter((item) => {
       return (item._id !== id)
     })
-    console.log(newArr)
     setproductlist(newArr)
     setdeleteIds([...deleteIds, id])
   }
 
-  
-  const handleDBchanges = async () => {
-    const res = await fetch("/api/dbChanges", {
-      method: "POST",
-      headers: {"Content-Type" : "application/json"},
-      body: JSON.stringify({"deleteIDs": deleteIds})
-    })
-    const r = await res.json()
-    console.log(r)
-  }
-  
-  useEffect(() => {
-    console.log({"deleteIDs":deleteIds})
-  })
-  
 
+  const handleDeletechanges = async () => {
+    if (deleteIds.length > 0) {
+      try {
+        const res = await fetch("/api/deleteChanges", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ "deleteIDs": deleteIds })
+        })
+        if (!res.ok) throw new Error("Fetch failed")
+        const r = await res.json()
+        console.log(r)
+        window.location.reload()
+      }
+      catch (err) {
+        console.error(err)
+        throw err
+      }
+    }
+
+  }
+
+  const handleEdit = (e, id) => {
+    let newArr = productlist.filter((item) => {
+      return (item._id === id)
+    })
+    setEdit(...newArr)
+    seteditPanel(true)
+  }
+
+  const handleUpdatedProduct = (e) => {
+    setupdatedProduct({ ...updatedProduct, [e.target.name]: e.target.value })
+  }
+
+  const handleUpdatechanges = async () => {
+    if (updatedProduct) {
+      try {
+        const res = await fetch("/api/updateChanges", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ item: updatedProduct, id: Edit._id })
+        })
+        if (!res.ok) throw new Error("Fetch failed")
+        const r = await res.json()
+        console.log(r)
+        window.location.reload()
+      }
+      catch (err) {
+        console.error(err)
+        throw err
+      }
+    }
+  }
+
+
+
+  useEffect(() => {
+    if (image.length > 0 && Edit) {
+      setupdatedProduct({ ...updatedProduct, picture: image })
+    }
+  }, [image])
 
 
   return (
@@ -119,12 +173,12 @@ const dashboard = () => {
             <div className='overflow-hidden'>
               <div className={`flex items-center gap-12 transition-all ${productButton ? "h-fit visible translate-y-0" : "h-5 invisible -translate-y-[218px] pointer-events-none"}`}>
                 <div className='flex flex-col grow-[0.5]'>
-                  <input onChange={handleUpload} type="file" accept='image/' className='border border-black my-2.5 px-2 py-1' />
+                  <input onChange={handleImageUpload} type="file" accept='image/' className='border border-black my-2.5 px-2 py-1' />
                   <input onChange={handleChange} name='product' type="text" className='border border-black my-2.5 px-2 py-1' placeholder='Enter product name' />
                   <input onChange={handleChange} name='brand' type="text" className='border border-black my-2.5 px-2 py-1' placeholder='Enter brand name' />
                   <input onChange={handleChange} name='quantity' className='border border-black my-2.5 px-2 py-1' type="number" min="1" max="50" />
                   <input onChange={handleChange} name='price' type="text" className='border border-black my-2.5 px-2 py-1' placeholder='Enter product price' />
-                  <button onClick={handleProduct} type="button" className="w-fit text-slate-950 border-2 border-black font-medium rounded-lg text-sm px-5 py-2.5 my-2.5">Upload</button>
+                  <button onClick={handleProductUpload} type="button" className="w-fit text-slate-950 border-2 border-black font-medium rounded-lg text-sm px-5 py-2.5 my-2.5">Upload</button>
                 </div>
 
                 <div>
@@ -135,8 +189,8 @@ const dashboard = () => {
 
             <div className='flex gap-2.5 items-center'>
               <button onClick={handleproductList} type="button" className="w-fit text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700 my-2.5">Manage products</button>
-              
-              <button onClick={handleDBchanges} type="button" className={`text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700`}>Save changes</button>
+
+              <button onClick={handleDeletechanges} type="button" className={`text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700`}>Save changes</button>
             </div>
             <div className='card_container flex flex-col justify-center items-center'>
               {productlist && productlist.map((item) => {
@@ -162,7 +216,7 @@ const dashboard = () => {
                   </div>
 
                   <div className="delete flex justify-center items-center gap-5">
-                    <button>
+                    <button onClick={(e) => handleEdit(e, item._id)}>
                       <img src="/edit.svg" alt="" className='size-7' />
                     </button>
                     <button onClick={(e) => handleDelete(e, item._id)}>
@@ -172,6 +226,43 @@ const dashboard = () => {
                 </div>
               })
               }
+            </div>
+
+            <div className={`min-w-full fixed top-0 left-0 min-h-full bg-[#86898f36] backdrop-blur-lg z-10 flex justify-center items-center ${editPanel ? "opacity-100 visible pointer-events-auto" : "opacity-0 invisible pointer-events-none"}`}>
+              <div className="card bg-white w-[500px] h-[600px]">
+                <div className='flex gap-2.5 items-center my-5 mx-5'>
+                  <button onClick={handleUpdatechanges} type="button" className={`text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700`}>Save changes</button>
+
+                  <button onClick={() => { seteditPanel(false); setEdit({}); setImage("") }} type="button" className="w-fit text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700 my-2.5">Cancel</button>
+                </div>
+                {Edit && <div className='mx-5 my-2.5'>
+                  <div className='flex justify-center my-4'>
+                    <img src={image.length > 0 ? image : Edit.picture} alt="" className='w-52' />
+                  </div>
+
+                  <div className='my-3'>
+                    <input onChange={handleImageUpload} type="file" accept='image/' />
+                  </div>
+
+                  <div className="flex gap-4 my-3">
+                    <h3>Brand: </h3>
+                    <input onChange={handleUpdatedProduct} defaultValue={Edit.brand} type="text" name='brand' />
+                  </div>
+                  <div className="flex gap-4 my-3">
+                    <h3>Product: </h3>
+                    <input onChange={handleUpdatedProduct} defaultValue={Edit.product} type="text" name='product' />
+                  </div>
+                  <div className="flex gap-4 my-3">
+                    <h3>Quantity: </h3>
+                    <input onChange={handleUpdatedProduct} defaultValue={Edit.quantity} type="number" min="1" max="50" name='quantity' />
+                  </div>
+                  <div className="flex gap-4 my-3">
+                    <h3>Price: </h3>
+                    <input onChange={handleUpdatedProduct} defaultValue={Edit.price} type="text" name='price' />
+                  </div>
+                </div>
+                }
+              </div>
             </div>
           </div>
         </div>
