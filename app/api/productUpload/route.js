@@ -15,7 +15,7 @@ export async function POST(req) {
         public_id: body.product,
     })
 
-    let func = await addProducttoDB({picture: result.secure_url, price: body.price,  product: body.product, brand: body.brand, quantity: body.quantity})
+    let func = await addProducttoDB({picture: result.secure_url, price: parseInt(body.price),  product: body.product, brand: body.brand, quantity: body.quantity})
 
     return NextResponse.json({ success: "true" })
 }

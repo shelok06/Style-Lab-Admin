@@ -28,8 +28,12 @@ export async function deleteProducts(ids) {
 export async function updateProduct(item, id) {
     await connectDB()
     for (const key in item) {
-        const db = await Product.findOneAndUpdate({"_id": id}, {[key]: item[key]})
-        console.log(db)
+        if (key === "price") {
+            const db = await Product.findOneAndUpdate({ "_id": id }, { [key]: parseInt(item[key]) })
+        }
+        else {
+            const db = await Product.findOneAndUpdate({ "_id": id }, { [key]: item[key] })
+        }
     }
 
     return true
