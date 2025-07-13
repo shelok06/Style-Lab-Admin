@@ -212,7 +212,7 @@ const dashboard = () => {
                   </div>
                   <div className="brand flex flex-col justify-evenly">
                     <h3 className='self-start'>Price</h3>
-                    <p>Rs.{item.price}</p>
+                    <p>{item.price.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</p>
                   </div>
 
                   <div className="delete flex justify-center items-center gap-5">
