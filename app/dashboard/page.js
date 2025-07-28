@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { ToastContainer, toast, Slide } from 'react-toastify';
+import { v4 as uuidv4 } from 'uuid';
 
 const dashboard = () => {
   const { data: session } = useSession()
@@ -15,6 +16,11 @@ const dashboard = () => {
   const [Edit, setEdit] = useState()
   const [editPanel, seteditPanel] = useState(false)
   const [updatedProduct, setupdatedProduct] = useState()
+  const [OrderList, setOrderList] = useState([])
+  const [Pdf, setPdf] = useState("")
+  const [earning, setearning] = useState()
+  const [topProd, settopProd] = useState("")
+  const [topProdCount, settopProdCount] = useState()
   const router = useRouter()
 
   // useEffect(() => {
@@ -72,7 +78,7 @@ const dashboard = () => {
 
   const handleproductList = async () => {
     try {
-      let res = await fetch("/api/productList")
+      let res = await fetch("/api/productList", { method: "POST" })
       if (!res.ok) throw new Error("Fetch failed");
       let r = await res.json()
       setproductlist([...r.data])
@@ -153,14 +159,94 @@ const dashboard = () => {
     }
   }, [image])
 
+  const handlefetchOrders = async () => {
+    const date = new Date
+    const d = date.toLocaleString("en-PK", { timeZone: "Asia/Karachi" }).split(",")[0]
+
+    let res = await fetch(`/api/fetchOrders?date=${d}`, { method: "POST" })
+    let r = await res.json()
+    setOrderList([...r.data])
+  }
+
+  const handleDelivery = async (id) => {
+    let d = confirm("Are you sure you want to change delivery status")
+    if (d) {
+      try {
+        const res = await fetch("/api/deliveryStatus", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: id })
+        })
+        if (!res.ok) throw new Error("Fetch failed")
+        const r = await res.json()
+        console.log(r)
+      }
+      catch (err) {
+        console.error(err)
+        throw err
+      }
+    }
+  }
+
+  const handleDownload = async () => {
+    try {
+      const res = await fetch("/api/pdfDownload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orders: OrderList })
+      })
+      if (!res.ok) throw new Error("Fetch failed")
+      const r = await res.blob()
+
+      let url = URL.createObjectURL(r)
+      window.open(url)
+      URL.revokeObjectURL(url)
+    }
+    catch (err) {
+      console.error(err)
+      throw err
+    }
+  }
+
+
+
+
+
+  useEffect(() => {
+    const fetchData = async () => {
+      let res = await fetch('/api/fetchSalesData')
+      let r = await res.json()
+      console.log(r)
+      setearning(r.message.earning)
+      settopProd(`${Object.keys(r.message.top)}`)
+      settopProdCount(`${Object.values(r.message.top)}`)
+    }
+
+    fetchData()
+  }, [])
+
+
 
   return (
     <>
       <ToastContainer />
-      <div className='mx-20 my-10 py-10'>
+      {session && <div className='mx-20 my-10 py-10'>
         <div className='my-5'>
           <h1 className='text-4xl font-extrabold text-slate-950'>Seller dashboard</h1>
         </div>
+        <div className="my-2.5 px-3 flex w-full gap-2">
+          <div className='bg-gray-50  rounded-xl shadow-xl p-4 w-1/2'>
+            <h1 className='text-4xl font-extrabold text-slate-950 my-4'>Total Earning</h1>
+            <div className='text-xl font-semibold my-2.5 text-slate-950'>{earning && earning.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</div>
+          </div>
+
+          <div className='bg-gray-50 rounded-xl shadow-xl p-4 w-1/2'>
+            <h1 className='text-4xl font-extrabold text-slate-950 my-2.5'>Top Selling Product</h1>
+            <div className='text-xl font-semibold mt-2.5 text-slate-950'>{topProd}</div>
+            <div className='text-xl font-semibold my-1 text-slate-950'>Number of items sold: {topProdCount}</div>
+          </div>
+        </div>
+
         <div className='my-2.5 px-3'>
           <h2 className='text-lg font-semibold'>Quick Actions</h2>
           <div className="buttons my-2.5 flex flex-col">
@@ -266,7 +352,115 @@ const dashboard = () => {
             </div>
           </div>
         </div>
-      </div>
+
+        <div className='my-10 px-3'>
+          <h1 className='text-4xl font-extrabold text-slate-950 my-2.5'>Todays Orders</h1>
+
+          <button onClick={handlefetchOrders} type="button" className="w-fit text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700 my-2.5">Show Todays Orders</button>
+
+
+          <div className="my-8">
+            {OrderList.length > 0 ? OrderList.map((element, index) => {
+              return <div key={index}>
+                <details>
+                  <summary className='my-2.5 font-bold'>Order id: {element.orderID}</summary>
+                  <div className="card py-2.5 sm:py-5 px-3 sm:px-10 bg-[#d1d5dc66] backdrop-blur-md rounded-xl shadow-lg my-5 flex flex-col gap-2">
+                    <h2 className='text-xl font-semibold my-4'>Order Details</h2>
+                    <div className='my-2'>
+                      <div className='flex gap-2'>
+                        <p className='font-semibold'>Order ID:</p> {element.orderID}
+                      </div>
+                      <div className='flex gap-2'>
+                        <p className='font-semibold'>Order placed on:</p> {element.updatedAt}
+                      </div>
+                      <div className='flex gap-2'>
+                        <p className='font-semibold'>Order Total:</p> {element.total.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
+                      </div>
+                    </div>
+
+                    <div className='my-2'>
+                      <h3 className='text-lg font-semibold my-4'>Customer Information</h3>
+                      <div className='my-2'>
+                        <div className="flex justify-between border-t border-neutral-500 p-4 font-light">
+                          <div className='text-slate-500'>Name</div>
+                          <div>{element.name}</div>
+                        </div>
+
+                        <div className="flex justify-between border-t border-neutral-500 p-4 font-light">
+                          <div className='text-slate-500'>Phone</div>
+                          <div>{element.phone}</div>
+                        </div>
+
+                        <div className="flex justify-between border-t border-neutral-500 p-4 font-light">
+                          <div className='text-slate-500'>Email</div>
+                          <div>{element.email}</div>
+                        </div>
+
+                        <div className="flex justify-between border-y border-neutral-500 p-4 font-light">
+                          <div className='text-slate-500'>Address</div>
+                          <div>{element.address}</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className='my-2'>
+                      <h3 className='text-lg font-semibold my-4'>Order Summary</h3>
+                      <div className='my-2'>
+                        <table className="table-fixed w-full rounded-lg shadow-xl text-center overflow-hidden outline outline-gray-800">
+                          <thead>
+                            <tr className='border-y border-gray-500'>
+                              <th className='p-4'>Item</th>
+                              <th className='p-4'>Quantity</th>
+                              <th className='p-4'>Price</th>
+                            </tr>
+                          </thead>
+                          <tbody className='text-center'>
+                            {element.items && element.items.map((item, i) => {
+                              return <tr className='border-y border-gray-500' key={uuidv4()}>
+                                <td className='p-4'>{item.product} - {item.brand}</td>
+                                <td className='p-4'>{item.quantity}</td>
+                                <td className='p-4'>{item.price.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</td>
+                              </tr>
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                    <div className='my-2'>
+                      <h3 className='text-lg font-semibold my-4'>Payment and Delivery Information</h3>
+                      <div className='my-2'>
+                        <div className="flex justify-between border-t border-neutral-500 p-4 font-light">
+                          <div className='text-slate-500'>Payment Status</div>
+                          <div>{element.payment ? <p className='text-green-500'>Paid</p> : <p>Pending</p>}</div>
+                        </div>
+
+                        <div className="flex justify-between border-t border-neutral-500 p-4 font-light">
+                          <div className='text-slate-500'>Delivery Date</div>
+                          <div>{element.deliveryDate}</div>
+                        </div>
+
+                        <div className="flex justify-between border-t border-neutral-500 p-4 font-light">
+                          <div className='text-slate-500'>Delivery Status</div>
+                          <div>{element.delivery ? <p className='text-green-500'>Deliverd</p> : <p>Pending</p>}</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className={`buttons ${element.delivery ? "hidden" : "flex justify-end items-center gap-4"}`}>
+                      <button onClick={() => handleDelivery(element.orderID)} type="button" className="text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 focus:outline-none dark:focus:ring-green-800">Change order status to deliverd</button>
+                    </div>
+                  </div>
+                </details>
+              </div>
+            }) : <div>No orders today</div>}
+
+            <div className={`button my-2 ${OrderList.length > 0 ? "block" : "hidden"}`}>
+              <button onClick={() => handleDownload()} type="button" className="focus:outline-none text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900">Download as PDF</button>
+            </div>
+          </div>
+        </div>
+      </div>}
     </>
   )
 }

@@ -19,7 +19,11 @@ export const authOptions = NextAuth({
                     console.log("Unauthorized")
                     return null
                 }
-            }
+            },
+            async jwt({ token, account, profile }) {
+                console.log(token)
+                return token
+            },
         })
     ]
 })

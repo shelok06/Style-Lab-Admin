@@ -12,7 +12,6 @@ export default function Home() {
 
   const handleChange = (e) => {
     setForm({...form, [e.target.name]: e.target.value})
-    console.log(form)
   }
 
   const handleClick = async () => {
