@@ -7,7 +7,7 @@ const Navbar = () => {
     const { data: session } = useSession()
     return (
         <>
-            <nav className='my-10 flex justify-between items-center px-5'>
+            <nav className='my-10 flex flex-col sm:flex-row sm:justify-between sm:items-center sm:px-5 gap-2.5'>
                 <div className='flex justify-center items-center gap-4'>
                     <div className="logo flex justify-center items-center">
                         <img src="/logo.svg" alt="style-lab" width={50} />
@@ -17,7 +17,7 @@ const Navbar = () => {
                 </div>
                 {session && <div className=' flex justify-center items-center gap-4'>
                     <div>{session.user.name}</div>
-                    <button onClick={()=>signOut()} className='border-2 border-black px-5 py-2'>Sign Out</button>
+                    <button onClick={()=>signOut()} className='border-2 border-black sm:px-5 sm:py-2 px-3 py-2 sm:text-base text-sm'>Sign Out</button>
                 </div>}
             </nav>
         </>

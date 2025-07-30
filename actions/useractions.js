@@ -153,6 +153,10 @@ export async function dataCalcultion() {
         if (!db) throw new Error("Server Error")
 
         const data = await db.collection("orders").find({ payment: true }).toArray()
+        const data2 = await db.collection("orders").find({ delivery: true }).toArray()
+        const data3 = await db.collection("orders").find({}).toArray()
+
+        let chartData = {total: data3.length, delivery: data2.length, payment: data.length}
         let earning = 0
 
         data.forEach((element) => {
@@ -181,16 +185,14 @@ export async function dataCalcultion() {
         })
 
         let val = Object.values(list).sort(function (a, b) { return b - a })
-        let top
+        let top = []
         for (const key in list) {
             if (list[key] === val[0]) {
-                top = { [key]: list[key] }
+                top.push({ [key]: list[key] })
             }
         }
 
-        console.log(list)
-
-        return { success: true, message: { earning: earning, top: top } }
+        return { success: true, message: { earning: earning, top: top, chart: chartData } }
     } catch (error) {
         return { success: false, message: error }
     }
