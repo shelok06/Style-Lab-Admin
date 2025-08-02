@@ -7,6 +7,7 @@ export async function POST(req) {
     const pdf = await pdfCreator(body.orders)
     if (pdf.success) {
         let pdfBuffer = fs.readFileSync('order.pdf')
+        fs.unlink('order.pdf', ()=>{})
         let arrBuffer = new Uint8Array(pdfBuffer)
 
         return new NextResponse(arrBuffer, {
