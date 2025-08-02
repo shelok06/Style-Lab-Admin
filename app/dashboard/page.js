@@ -8,7 +8,7 @@ import PieChart from '@/components/PieChart'
 import Loader from '@/components/Loader'
 import { v4 as uuidv4 } from 'uuid';
 
-const dashboard = () => {
+const Dashboard = () => {
   const { data: session } = useSession()
   const [image, setImage] = useState("")
   const [product, setProduct] = useState()
@@ -660,4 +660,4 @@ const dashboard = () => {
   )
 }
 
-export default dashboard
+export default Dashboard
