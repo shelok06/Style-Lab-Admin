@@ -453,7 +453,7 @@ const dashboard = () => {
               </div>
             </button>
             <div>
-              <div className={`flex lg:flex-row flex-col-reverse items-center gap-12 transition-all ${productButton ? "h-fit visible translate-y-0" : "h-5 invisible -translate-y-[218px] pointer-events-none"}`}>
+              <div className={`flex lg:flex-row flex-col-reverse items-center gap-12 transition-all ${productButton ? "h-fit visible translate-y-0" : "h-5 invisible -translate-y-[218px] pointer-events-none"} overflow-y-hidden`}>
                 <div className='flex flex-col lg:grow-[0.5]'>
                   <input onChange={handleImageUpload} type="file" accept='image/' className='border border-black my-2.5 px-2 py-1 w-[90%]' />
                   <input onChange={handleChange} name='product' type="text" className='border border-black my-2.5 px-2 py-1 w-[90%]' placeholder='Enter product name' />
