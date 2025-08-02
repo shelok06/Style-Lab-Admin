@@ -19,12 +19,13 @@ export default function Home() {
   const handleClick = async () => {
     const signin = await signIn("credentials", form)
     setloader(true)
+    console.log(signin)
     if (signin.ok) {
       router.push("/dashboard")
     }
     else {
       setloader(false)
-      toast.error('Wrong Credentials', {
+      toast.error(signin.error, {
         position: "top-right",
         autoClose: 2000,
         hideProgressBar: true,
