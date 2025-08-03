@@ -95,8 +95,14 @@ export async function pdfCreator(orders) {
     const d = date.toLocaleString("en-PK", { timeZone: "Asia/Karachi" }).split(",")[0]
     return new Promise((resolve, reject) => {
         const doc = new PDFDocument()
-        let stream = fs.createWriteStream('order.pdf')
-        doc.pipe(stream)
+
+        let chunks = []
+        doc.on('data', chunk => { chunks.push(chunk) })
+
+        doc.on('end', () => {
+            const pdfBuffer = Buffer.concat(chunks)
+            resolve(pdfBuffer)
+        })
 
         doc.fontSize(18).text("Todays Orders", {
             width: 410,
@@ -138,10 +144,6 @@ export async function pdfCreator(orders) {
         })
 
         doc.end()
-
-        stream.on('finish', () => {
-            resolve({ success: true })
-        })
     })
 }
 
@@ -156,7 +158,7 @@ export async function dataCalcultion() {
         const data2 = await db.collection("orders").find({ delivery: true }).toArray()
         const data3 = await db.collection("orders").find({}).toArray()
 
-        let chartData = {total: data3.length, delivery: data2.length, payment: data.length}
+        let chartData = { total: data3.length, delivery: data2.length, payment: data.length }
         let earning = 0
 
         data.forEach((element) => {

@@ -18,7 +18,6 @@ export async function middleware(req) {
         const key = `${ip}:${req.nextUrl.pathname}`
 
         let result = await ratelimit.limit(key)
-        console.log(result)
         if (!result.success) {
             return new NextResponse("Too many requests", { status: 429 })
         }
@@ -31,7 +30,6 @@ export async function middleware(req) {
         const key = `${ip}:${req.nextUrl.pathname}`
 
         let result = await ratelimit.limit(key)
-        console.log(result)
         if (!result.success) {
             return new NextResponse("Too many requests", { status: 429 })
         }
@@ -44,7 +42,6 @@ export async function middleware(req) {
         const key = `${ip}:${req.nextUrl.pathname}`
 
         let result = await ratelimit.limit(key)
-        console.log(result)
         if (!result.success) {
             return new NextResponse("Too many requests", { status: 429 })
         }
@@ -57,7 +54,6 @@ export async function middleware(req) {
         const key = `${ip}:${req.nextUrl.pathname}`
 
         let result = await ratelimit.limit(key)
-        console.log(result)
         if (!result.success) {
             return new NextResponse("Too many requests", { status: 429 })
         }
@@ -70,7 +66,6 @@ export async function middleware(req) {
         const key = `${ip}:${req.nextUrl.pathname}`
 
         let result = await ratelimit.limit(key)
-        console.log(result)
         if (!result.success) {
             return new NextResponse("Too many requests", { status: 429 })
         }
